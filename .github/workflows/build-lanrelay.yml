@@ -1,0 +1,25 @@
+name: Build LAN Relay APK
+on:
+  push:
+    branches: [build/lanrelay-apk]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: yes | sdkmanager --licenses >/dev/null 2>&1; sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
+      - name: Build
+        working-directory: lanrelay-native
+        run: gradle --no-daemon --max-workers=2 assembleRelease
+      - name: Verify APK
+        run: apksigner verify --verbose lanrelay-native/app/build/outputs/apk/release/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lanrelay-native-release
+          path: lanrelay-native/app/build/outputs/apk/release/app-release.apk
